@@ -1,0 +1,25 @@
+falling algorithm, v1
+
+if (falling):
+	if (collision):
+		stop fall
+		set to platform
+	else:
+		if (falling >= 8):
+			set falling to 8
+		else
+			falling += .001
+		end
+	end
+else:
+	if (collision):
+		//just walking around
+	else:
+		set falling to .001
+	end
+end
+
+-------------------------
+
+falling algorithm, v2
+
