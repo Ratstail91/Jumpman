@@ -16,14 +16,20 @@ using namespace std;
 #error BaseScene version is incompatible with this scene
 #endif
 
+//speed controls
+#define JUMP .35f
+#define FALL .35f
+#define MOVE .20f
+#define ACCELERATE .001f
+
 //-------------------------
 //Public access members
 //-------------------------
 
 ScenePrime::ScenePrime() {
 	m_thing.LoadImage("red.bmp");
-	m_floor.SetBBox(0, 0, GetScreen()->w, 100);
-	m_floor.SetOriginY(GetScreen()->h);
+	m_floor.SetBBox(0, 0, 100, 100);
+	m_floor.SetOriginY(GetScreen()->h-300);
 }
 
 ScenePrime::~ScenePrime() {
@@ -46,41 +52,50 @@ void ScenePrime::Update() {
 	FPSUtility::CalcDeltaTime();
 
 	//better motion control than the kinect
-	if (m_thing.GetMotionY() > 0) {
-		cout << "falling; ";
+	if (m_thing.GetMotionY() != 0) {
+		//falling
 		if (m_thing.CheckWorldBBox(m_floor.GetWorldBBox())) {
-			//stop falling
+			//collision with the floor
 			m_thing.SetMotionY(0);
-			m_thing.SetOriginY(m_floor.GetOriginY() - m_thing.GetBBoxH() + 1);
+			m_thing.SetOriginY(m_floor.GetOriginY() - m_thing.GetBBoxH() + 1); //snap to the floor
 		}
 		else {
-			if (m_thing.GetMotionY() >= 8)
-				m_thing.SetMotionY(8);
-			else
-				m_thing.ShiftMotionY(.001);
+			//freefall control
+//			cout << "freefall 17 " << m_thing.GetMotionY() << endl;
+			if (m_thing.GetMotionY() >= FALL) {
+				m_thing.SetMotionY(FALL);
+			}
+			else {
+				m_thing.ShiftMotionY(ACCELERATE);
+			}
 		}
 	}
 	else {
-		cout << "walking; ";
+		//standing
 		if (m_thing.CheckWorldBBox(m_floor.GetWorldBBox())) {
-			//just walking around
+			//on a ledge, no effect
 		}
 		else {
-			m_thing.SetMotionY(.001);
+			//stepped off of the ledge
+			m_thing.ShiftMotionY(ACCELERATE);
 		}
 	}
-
-	if (m_thing.CheckWorldBBox(m_floor.GetWorldBBox())) {
-		cout << "collision; ";
-	}
-
-	cout << endl; //debugging
 
 	m_thing.Update(FPSUtility::GetDeltaTime());
 }
 
 void ScenePrime::Render(SDL_Surface* const pScreen) {
 	SDL_FillRect(pScreen, NULL, SDL_MapRGB(pScreen->format, 0, 0, 0));
+
+	//draw the ledge
+	SDL_Rect rect;
+
+	rect.x = m_floor.GetOriginX();
+	rect.y = m_floor.GetOriginY();
+	rect.w = m_floor.GetBBox().w;
+	rect.h = m_floor.GetBBox().h;
+
+	SDL_FillRect(pScreen, &rect, SDL_MapRGB(pScreen->format, 255, 0, 0));
 
 	m_thing.DrawTo(pScreen);
 }
@@ -107,14 +122,39 @@ void ScenePrime::KeyDown(SDL_KeyboardEvent const& rKey) {
 			QuitEvent();
 			break;
 
+			//movement controls
 		case SDLK_SPACE:
-			m_thing.ShiftMotionY(-50);
+			if (m_thing.CheckWorldBBox(m_floor.GetWorldBBox())) {
+				//jump
+				m_thing.SetMotionY(-JUMP);
+				m_thing.ShiftOriginY(-1);
+			}
+			break;
+
+		case SDLK_LEFT:
+			m_thing.ShiftMotionX(-MOVE);
+			break;
+
+		case SDLK_RIGHT:
+			m_thing.ShiftMotionX( MOVE);
+			break;
+
+		case SDLK_RETURN:
+			m_thing.SetOriginPosition(0, 0);
 			break;
 	};
 }
 
 void ScenePrime::KeyUp(SDL_KeyboardEvent const& rKey) {
-	//
+	switch(rKey.keysym.sym) {
+		case SDLK_LEFT:
+			m_thing.ShiftMotionX( MOVE);
+			break;
+
+		case SDLK_RIGHT:
+			m_thing.ShiftMotionX(-MOVE);
+			break;
+	}
 }
 
 //-------------------------

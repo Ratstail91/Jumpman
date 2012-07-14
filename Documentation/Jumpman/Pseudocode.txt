@@ -1,5 +1,7 @@
 falling algorithm, v1
 
+--
+
 if (falling):
 	if (collision):
 		stop fall
@@ -23,3 +25,41 @@ end
 
 falling algorithm, v2
 
+will need a separate function to check if the character is standing
+
+--
+
+preprocessor:
+	JUMP		= .35
+	FALL		= .35
+	MOVE		= .20
+	ACCELERATE	= .001
+
+update:
+	if (falling != 0):
+		
+		if (collision): //hit the ground: would need to check from which direction?
+			stop fall
+			set to platform
+		else:
+			if (falling >= FALL): //hit the speed limit
+				set falling to FALL
+			else
+				falling += ACCELERATE //acceleration
+			end
+		end
+		
+	else: // not falling
+		if (collision):
+			//just walking around
+		else:
+			falling += ACCELERATE //falling off of a ledge
+		end
+	end
+end
+
+button:
+	if (falling == 0 && collision): //standing
+		thing.motionY(-JUMP) //up
+	end
+end
