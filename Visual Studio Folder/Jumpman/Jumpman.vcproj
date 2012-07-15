@@ -211,6 +211,14 @@
 				RelativePath="..\..\Documentation\Jumpman\TODO.txt"
 				>
 			</File>
+			<Filter
+				Name="Pseudocode"
+				>
+				<File
+					RelativePath="..\..\Documentation\Jumpman\Pseudocode\Movement Algorithm.txt"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="ScenePrime"
