@@ -28,7 +28,7 @@ using namespace std;
 
 ScenePrime::ScenePrime() {
 	m_thing.LoadImage("red.bmp");
-	m_floor.SetBBox(0, 0, 100, 100);
+	m_floor.SetBBox(0, 0, 32, 32);
 	m_floor.SetOriginY(GetScreen()->h-300);
 }
 
@@ -57,7 +57,7 @@ void ScenePrime::Update() {
 		if (m_thing.CheckWorldBBox(m_floor.GetWorldBBox())) {
 			//collision with the floor
 			m_thing.SetMotionY(0);
-			m_thing.SetOriginY(m_floor.GetOriginY() - m_thing.GetBBoxH() + 1); //snap to the floor
+			m_thing.SetOriginY(m_floor.GetWorldBBox().y - m_thing.GetBBoxH() ); //snap to the floor
 		}
 		else {
 			//freefall control
@@ -96,6 +96,15 @@ void ScenePrime::Render(SDL_Surface* const pScreen) {
 	rect.h = m_floor.GetBBox().h;
 
 	SDL_FillRect(pScreen, &rect, SDL_MapRGB(pScreen->format, 255, 0, 0));
+
+	//draw the collision indicator
+	rect.x = 400;
+	rect.y = 400;
+	rect.w = 40;
+	rect.h = 40;
+
+	if (m_thing.GetMotionY() != 0)
+		SDL_FillRect(pScreen, &rect, SDL_MapRGB(pScreen->format, 255, 255, 255));
 
 	m_thing.DrawTo(pScreen);
 }
