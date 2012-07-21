@@ -87,7 +87,7 @@ preprocessor:
 	ACCELERATE	= .001
 end
 
-Entity::CheckWorldBBox( box ):
+Entity::CheckWorldBBox( box ): //"NewCollision"
 	/* this figures out the position of the OTHER bbox relative to this entity
 	 * This code may "ascend" into the codebase at some point (and use a bitmask?).
 	 * 0: no collision
@@ -95,6 +95,9 @@ Entity::CheckWorldBBox( box ):
 	 * 2: right
 	 * 3: below
 	 * 4: left
+	 * 
+	 * Qustion: if (a.x > b.w) constitutes a collision, then
+	 *     what if (a.x == b.w)?
 	*/
 	
 	if (!BBox::CheckWorldBBox( box )) return 0; //no collision, skip the rest
