@@ -51,34 +51,12 @@ void ScenePrime::Tail() {
 void ScenePrime::Update() {
 	FPSUtility::CalcDeltaTime();
 
-	//better motion control than the kinect
-	if (m_thing.GetMotionY() != 0) {
-		//falling
-		if (m_thing.CheckWorldBBox(m_floor.GetWorldBBox())) {
-			//collision with the floor
-			m_thing.SetMotionY(0);
-			m_thing.SetOriginY(m_floor.GetWorldBBox().y - m_thing.GetBBoxH() ); //snap to the floor
-		}
-		else {
-			//freefall control
-//			cout << "freefall 17 " << m_thing.GetMotionY() << endl;
-			if (m_thing.GetMotionY() >= FALL) {
-				m_thing.SetMotionY(FALL);
-			}
-			else {
-				m_thing.ShiftMotionY(ACCELERATE);
-			}
-		}
+	if ( m_floor.CheckWorldBBox( m_thing.GetWorldBBox(0,0,0,1) ) ) {
+		m_thing.SetMotionY( 0 );
+		m_thing.SetOriginY( m_floor.GetWorldBBox().y - m_thing.GetWorldBBox().h );
 	}
 	else {
-		//standing
-		if (m_thing.CheckWorldBBox(m_floor.GetWorldBBox())) {
-			//on a ledge, no effect
-		}
-		else {
-			//stepped off of the ledge
-			m_thing.ShiftMotionY(ACCELERATE);
-		}
+		m_thing.SetMotionY(.1);
 	}
 
 	m_thing.Update(FPSUtility::GetDeltaTime());
@@ -88,12 +66,7 @@ void ScenePrime::Render(SDL_Surface* const pScreen) {
 	SDL_FillRect(pScreen, NULL, SDL_MapRGB(pScreen->format, 0, 0, 0));
 
 	//draw the ledge
-	SDL_Rect rect;
-
-	rect.x = m_floor.GetOriginX();
-	rect.y = m_floor.GetOriginY();
-	rect.w = m_floor.GetBBox().w;
-	rect.h = m_floor.GetBBox().h;
+	SDL_Rect rect = m_floor.GetWorldBBox();
 
 	SDL_FillRect(pScreen, &rect, SDL_MapRGB(pScreen->format, 255, 0, 0));
 
@@ -103,6 +76,7 @@ void ScenePrime::Render(SDL_Surface* const pScreen) {
 	rect.w = 40;
 	rect.h = 40;
 
+	//if it is falling, draw the square
 	if (m_thing.GetMotionY() != 0)
 		SDL_FillRect(pScreen, &rect, SDL_MapRGB(pScreen->format, 255, 255, 255));
 
@@ -113,18 +87,6 @@ void ScenePrime::Render(SDL_Surface* const pScreen) {
 //Input loop members
 //-------------------------
 
-void ScenePrime::MouseMotion(SDL_MouseMotionEvent const& rMotion) {
-	//
-}
-
-void ScenePrime::MouseButtonDown(SDL_MouseButtonEvent const& rButton) {
-	//
-}
-
-void ScenePrime::MouseButtonUp(SDL_MouseButtonEvent const& rButton) {
-	//
-}
-
 void ScenePrime::KeyDown(SDL_KeyboardEvent const& rKey) {
 	switch(rKey.keysym.sym) {
 		case SDLK_ESCAPE:
@@ -133,7 +95,7 @@ void ScenePrime::KeyDown(SDL_KeyboardEvent const& rKey) {
 
 			//movement controls
 		case SDLK_SPACE:
-			if (m_thing.CheckWorldBBox(m_floor.GetWorldBBox())) {
+			if ( m_floor.CheckWorldBBox( m_thing.GetWorldBBox(0,0,0,1) ) ) {
 				//jump
 				m_thing.SetMotionY(-JUMP);
 				m_thing.ShiftOriginY(-1);
