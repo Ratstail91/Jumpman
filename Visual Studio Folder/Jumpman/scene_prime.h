@@ -23,8 +23,6 @@ public:
 
 protected:
 	/* Frame loop members */
-	virtual void Head	();
-	virtual void Tail	();
 	virtual void Update	();
 	virtual void Render	(SDL_Surface* const);
 

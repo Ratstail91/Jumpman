@@ -70,7 +70,8 @@ movement algorithm, v3
 
 Determine the correct action to take depending on the type of collision:
 	If the character lands on a platform, the character should stand on that platform.
-	If the character lands on the side of a platform, the character should keep falling.
+	If the character lands on the side of a platform, the character should keep falling,
+	 but not through the platform's side.
 	If the character collides with the bottom of a platform, then the character should
 	 stop accelerating upwards, and fall back down.
 	If the character walks off of a platofrm, the character should start falling again.
@@ -115,10 +116,157 @@ Entity::CheckWorldBBox( box ): //"NewCollision"
 	//...
 end
 
+Scene::Update():
+	CalcDeltaTime()
+	
+	//freefall control
+	if (falling != 0):
+		if (collision w/ platform below):
+			stop fall
+			snap to the platform
+			
+		else if (collision w/ platform above):
+			stop fall
+			snap to the bottom of the platform
+			start falling down
+			
+		else //normal fall
+			if (falling >= FALL):
+				falling = FALL
+			else
+				falling += ACCELERATE
+			end
+		end
+		
+	else: //not falling
+		if (not collision w/ platform below)
+			falling += ACCELERATE
+		end
+	end
+	
+	//sideways movement control
+	if (collision on the left):
+		stop leftward movement
+	end
+	
+	if (collision on the right):
+		stop rightward movement
+	end
+	
+	
+	player.Update(GetDeltaTime())
+end
 
+Scene::KeyboardDown():
+	jump:
+		if (falling == 0 && collision w/ platform below):
+			player.SetMotionY( -JUMP )
+		end
+	end
+	
+	left:
+		if (player.GetMotionX() - MOVE >= -MOVE):
+			player.ShiftMotionX( -MOVE )
+		else
+			player.SetMotionX( -MOVE )
+		end
+	end
+	
+	right:
+		if (player.GetMotionX() + MOVE <= MOVE):
+			player.ShiftMotionX( MOVE )
+		else
+			player.SetMotionX( MOVE )
+		end
+	end
+end
+
+Scene::KeyboardUp():
+	//this is odd, since it restricts the motion even on key release
+	left:
+		if (player.GetMotionX() + MOVE <= MOVE):
+			player.ShiftMotionX( MOVE )
+		else
+			player.SetMotionX( MOVE )
+		end
+	end
+	
+	right:
+		if (player.GetMotionX() - MOVE >= -MOVE):
+			player.ShiftMotionX( -MOVE )
+		else
+			player.SetMotionX( -MOVE )
+		end
+	end
+end
+
+-------------------------
+
+movement algorithm, v4
+
+Determine the correct action to take depending on the type of collision:
+	If the character lands on a platform, the character should stand on that platform.
+	If the character lands on the side of a platform, the character should keep falling,
+	 but not through the platform's side.
+	If the character collides with the bottom of a platform, then the character should
+	 stop accelerating upwards, and fall back down.
+	If the character walks off of a platofrm, the character should start falling again.
+	
+	Forgive my defensive programming.
+end
+
+--
+
+preprocessor:
+	JUMP		= .35
+	FALL		= .35
+	MOVE		= .20
+	ACCELERATE	= .001
+end
+
+Entity::GetWorldBBox(x, y, w, h) //tweak parameters
+Entity::CheckWorldBBox(otherBox) //wraps around BBox2D::CheckWorldBBox(otherBox, x, y)
+
+Entity::CheckCollisionSide( otherBox ): //returns the direction of a collision
+	/* this figures out the position of the OTHER bbox relative to this entity
+	 * 0: no collision
+	 * 1: above
+	 * 2: below
+	 * 3: left
+	 * 4: right
+	*/
+	
+	if (!BBox2D::CheckWorldBBox( otherBox )) return 0; //no collision, skip the rest
+	
+	SDL_Rect myBox = GetWorldBBox()
+	
+	//above
+	if (
+		(closer to the top than the bottom) &&
+		(closer to the top than the sides)
+		)
+		return above
+	
+	//should I have done this as a macro?
+	
+	//above
+	if (
+		(otherBox.y + otherBox.h - myBox.y < myBox.y + myBox.h - otherBox.y) &&
+		(otherBox.y + otherBox.h - myBox.y < min( otherBox.x+otherBox.w-myBox.x, myBox.x+myBox.w-otherBox.x ))
+		)
+		return 1;
+	
+	//below
+	if (
+		(myBox.y + myBox.h - otherBox.y < otherBox.y + otherBox.h - myBox.y) &&
+		(myBox.y + myBox.h - otherBox.y < min( otherBox.x+otherBox.w-myBox.x, myBox.x+myBox.w-otherBox.x ))
+		)
+		return 2;
+end
 
 Scene::Update():
 	CalcDeltaTime()
+	
 	
 	//freefall control
 	if (falling != 0):

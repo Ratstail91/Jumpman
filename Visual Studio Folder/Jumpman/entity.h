@@ -24,6 +24,7 @@ public:
 
 	virtual SDL_Rect GetWorldBBox	(Sint16 x=0, Sint16 y=0, Sint16 w=0, Sint16 h=0);
 	virtual int CheckWorldBBox		(SDL_Rect otherBox);
+	virtual int CheckCollisionSide	(SDL_Rect otherBox);
 
 protected:
 	/* Protected access members */
