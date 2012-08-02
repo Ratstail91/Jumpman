@@ -6,6 +6,7 @@
 */
 #include <iostream>
 #include "scene_prime.h"
+#include "collision_side.h"
 using namespace std;
 
 //-------------------------
@@ -28,7 +29,7 @@ using namespace std;
 
 ScenePrime::ScenePrime() {
 	m_thing.LoadImage("red.bmp");
-	m_floor.SetBBox(0, 0, 32, 32);
+	m_floor.SetBBox(0, 0, 32, 1000);
 	m_floor.SetOriginY(GetScreen()->h-300);
 }
 
@@ -40,33 +41,37 @@ ScenePrime::~ScenePrime() {
 //Frame loop members
 //-------------------------
 
-/*void ScenePrime::Update() {
-	FPSUtility::CalcDeltaTime();
+/*
+void ScenePrime::Update() {
+	//simple movement downwards
 
-//	cout << m_thing.CheckCollisionSide( m_floor.GetWorldBBox() ) << endl;
-
+	//debug...
 	SDL_Rect myBox = m_thing.GetWorldBBox(0, 0, 0, 1);
 
 	//if collision
-	if ( m_floor.CheckWorldBBox( m_thing.GetWorldBBox(0,0,0,1) ) ) {
+	if (m_floor.CheckWorldBBox(  m_thing.GetWorldBBox(0,0,0,1)  )) {
 		m_thing.SetMotionY( 0 );
-		m_thing.SetOriginY( m_floor.GetWorldBBox().y - m_thing.GetWorldBBox().h );
+		m_thing.SetOriginY(m_floor.GetWorldBBox().y - m_thing.GetWorldBBox().h);
 	}
 	else {
-		cout << myBox.x << " " << myBox.y << " " << myBox.w << " " << myBox.h << endl;
+		cout << myBox.x << " " << myBox.y << " " << myBox.x + myBox.w << " " << myBox.y + myBox.h << endl;
 		m_thing.SetMotionY(.1);
 	}
 
+	//updates
+	FPSUtility::CalcDeltaTime();
 	m_thing.Update(FPSUtility::GetDeltaTime());
-}*/
+}
+//*/
 
+/*
 void ScenePrime::Update() {
 	FPSUtility::CalcDeltaTime();
 
 	/* I know this is just a prototype, but I'm really not happy with it yet.
 	 * I just need to get these algorithms done, and hopefully correctly, then
 	 * I can clean it up.
-	*/
+	* /
 
 	//freefall control
 	if (m_thing.GetMotionY() != 0) {
@@ -126,6 +131,48 @@ void ScenePrime::Update() {
 
 	m_thing.Update( FPSUtility::GetDeltaTime());
 }
+//*/
+
+void ScenePrime::Update() {
+	FPSUtility::CalcDeltaTime();
+
+	//boxes
+	SDL_Rect myBox = m_thing.GetWorldBBox(0, 0, 0, 1);
+	SDL_Rect otherBox = m_floor.GetWorldBBox();
+
+	if (m_thing.GetMotionY() != 0) {
+		//freefall
+
+		//cascading conditions
+
+		if ( CheckCollisionBelow(myBox, otherBox) ) {//TODO logic error: problem with jumping...
+			//land on a platform
+			m_thing.SetMotionY(0);
+			m_thing.SetOriginY(m_floor.GetWorldBBox().y-m_thing.GetBBoxH());
+		}
+		//collision above...
+
+		else {
+			//continue falling
+			if (m_thing.GetMotionY() >= FALL)
+				m_thing.SetMotionY(FALL);
+			else
+				m_thing.ShiftMotionY(ACCELERATE);
+		}
+	}
+	else {
+		//if not on a platform
+		if ( !CheckCollisionBelow(myBox, otherBox) ) {
+			m_thing.ShiftMotionY(ACCELERATE);
+		}
+	}
+
+	//left and right movement
+	//...
+
+	//updates
+	m_thing.Update(FPSUtility::GetDeltaTime());
+}
 
 void ScenePrime::Render(SDL_Surface* const pScreen) {
 	SDL_FillRect(pScreen, NULL, SDL_MapRGB(pScreen->format, 0, 0, 0));
@@ -160,10 +207,9 @@ void ScenePrime::KeyDown(SDL_KeyboardEvent const& rKey) {
 
 			//movement controls
 		case SDLK_SPACE:
-			if (m_thing.GetMotionY() == 0 && m_floor.CheckWorldBBox( m_thing.GetWorldBBox(0,0,0,1) )) {
+			if (m_thing.GetMotionY() == 0 && CheckCollisionBelow(m_thing.GetWorldBBox(0,0,0,1), m_floor.GetWorldBBox()) ) {
 				//jump
 				m_thing.SetMotionY(-JUMP);
-//				m_thing.ShiftOriginY(-1);
 			}
 			break;
 

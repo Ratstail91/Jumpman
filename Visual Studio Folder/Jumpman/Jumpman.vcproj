@@ -240,6 +240,18 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="CollisionSide"
+			>
+			<File
+				RelativePath=".\collision_side.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\collision_side.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

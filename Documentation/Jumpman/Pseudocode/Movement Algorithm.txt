@@ -1,207 +1,3 @@
-movement algorithm, v1
-
---
-
-if (falling):
-	if (collision):
-		stop fall
-		set to platform
-	else:
-		if (falling >= 8):
-			set falling to 8
-		else
-			falling += .001
-		end
-	end
-else:
-	if (collision):
-		//just walking around
-	else:
-		set falling to .001
-	end
-end
-
--------------------------
-
-movement algorithm, v2
-
-will need a separate function to check if the character is standing
-
---
-
-preprocessor:
-	JUMP		= .35
-	FALL		= .35
-	MOVE		= .20
-	ACCELERATE	= .001
-
-update:
-	if (falling != 0):
-		
-		if (collision): //hit the ground: would need to check from which direction?
-			stop fall
-			set to platform
-		else:
-			if (falling >= FALL): //hit the speed limit
-				set falling to FALL
-			else
-				falling += ACCELERATE //acceleration
-			end
-		end
-		
-	else: // not falling
-		if (collision):
-			//just walking around
-		else:
-			falling += ACCELERATE //falling off of a ledge
-		end
-	end
-end
-
-button:
-	if (falling == 0 && collision): //standing
-		thing.motionY(-JUMP) //up
-	end
-end
-
--------------------------
-
-movement algorithm, v3
-
-Determine the correct action to take depending on the type of collision:
-	If the character lands on a platform, the character should stand on that platform.
-	If the character lands on the side of a platform, the character should keep falling,
-	 but not through the platform's side.
-	If the character collides with the bottom of a platform, then the character should
-	 stop accelerating upwards, and fall back down.
-	If the character walks off of a platofrm, the character should start falling again.
-	
-	Forgive my defensive programming.
-end
-
---
-
-preprocessor:
-	JUMP		= .35
-	FALL		= .35
-	MOVE		= .20
-	ACCELERATE	= .001
-end
-
-Entity::CheckWorldBBox( box ): //"NewCollision"
-	/* this figures out the position of the OTHER bbox relative to this entity
-	 * This code may "ascend" into the codebase at some point (and use a bitmask?).
-	 * 0: no collision
-	 * 1: above
-	 * 2: right
-	 * 3: below
-	 * 4: left
-	 * 
-	 * Qustion: if (a.x > b.w) constitutes a collision, then
-	 *     what if (a.x == b.w)?
-	*/
-	
-	if (!BBox::CheckWorldBBox( box )) return 0; //no collision, skip the rest
-	
-	BBox::Rect myBox = GetWorldBBox()
-	
-	//above
-	if ((closer to the top than the bottom) && (closer to the top than the sides))
-		return above
-	
-	//above
-	if ((box.h - myBox.y < myBox.h - box.y) && (box.h - myBox.y < min( box.w-myBox.x, myBox.w-box.x )))
-		return above
-	
-	//...
-end
-
-Scene::Update():
-	CalcDeltaTime()
-	
-	//freefall control
-	if (falling != 0):
-		if (collision w/ platform below):
-			stop fall
-			snap to the platform
-			
-		else if (collision w/ platform above):
-			stop fall
-			snap to the bottom of the platform
-			start falling down
-			
-		else //normal fall
-			if (falling >= FALL):
-				falling = FALL
-			else
-				falling += ACCELERATE
-			end
-		end
-		
-	else: //not falling
-		if (not collision w/ platform below)
-			falling += ACCELERATE
-		end
-	end
-	
-	//sideways movement control
-	if (collision on the left):
-		stop leftward movement
-	end
-	
-	if (collision on the right):
-		stop rightward movement
-	end
-	
-	
-	player.Update(GetDeltaTime())
-end
-
-Scene::KeyboardDown():
-	jump:
-		if (falling == 0 && collision w/ platform below):
-			player.SetMotionY( -JUMP )
-		end
-	end
-	
-	left:
-		if (player.GetMotionX() - MOVE >= -MOVE):
-			player.ShiftMotionX( -MOVE )
-		else
-			player.SetMotionX( -MOVE )
-		end
-	end
-	
-	right:
-		if (player.GetMotionX() + MOVE <= MOVE):
-			player.ShiftMotionX( MOVE )
-		else
-			player.SetMotionX( MOVE )
-		end
-	end
-end
-
-Scene::KeyboardUp():
-	//this is odd, since it restricts the motion even on key release
-	left:
-		if (player.GetMotionX() + MOVE <= MOVE):
-			player.ShiftMotionX( MOVE )
-		else
-			player.SetMotionX( MOVE )
-		end
-	end
-	
-	right:
-		if (player.GetMotionX() - MOVE >= -MOVE):
-			player.ShiftMotionX( -MOVE )
-		else
-			player.SetMotionX( -MOVE )
-		end
-	end
-end
-
--------------------------
-
 movement algorithm, v4
 
 Determine the correct action to take depending on the type of collision:
@@ -210,12 +6,12 @@ Determine the correct action to take depending on the type of collision:
 	 but not through the platform's side.
 	If the character collides with the bottom of a platform, then the character should
 	 stop accelerating upwards, and fall back down.
-	If the character walks off of a platofrm, the character should start falling again.
+	If the character walks off of a platform, the character should start falling again.
 	
 	Forgive my defensive programming.
 end
 
---
+-------------------------
 
 preprocessor:
 	JUMP		= .35
@@ -224,9 +20,27 @@ preprocessor:
 	ACCELERATE	= .001
 end
 
-Entity::GetWorldBBox(x, y, w, h) //tweak parameters
-Entity::CheckWorldBBox(otherBox) //wraps around BBox2D::CheckWorldBBox(otherBox, x, y)
+-------------------------
+collision_side.h
+-------------------------
 
+enum Direction:
+	NONE = 0
+	ABOVE
+	BELOW
+	LEFT
+	RIGHT
+end
+
+Direction CheckCollisionSide	(myBox, otherBox)
+Direction CheckCollisionAbove	(myBox, otherBox)
+Direction CheckCollisionBelow	(myBox, otherBox)
+Direction CheckCollisionLeft	(myBox, otherBox)
+Direction CheckCollisionRight	(myBox, otherBox)
+
+-------------------------
+
+//deprecated, but useful.
 Entity::CheckCollisionSide( otherBox ): //returns the direction of a collision
 	/* this figures out the position of the OTHER bbox relative to this entity
 	 * 0: no collision
@@ -265,9 +79,6 @@ Entity::CheckCollisionSide( otherBox ): //returns the direction of a collision
 end
 
 Scene::Update():
-	CalcDeltaTime()
-	
-	
 	//freefall control
 	if (falling != 0):
 		if (collision w/ platform below):
@@ -302,50 +113,6 @@ Scene::Update():
 		stop rightward movement
 	end
 	
-	
+	CalcDeltaTime()
 	player.Update(GetDeltaTime())
 end
-
-Scene::KeyboardDown():
-	jump:
-		if (falling == 0 && collision w/ platform below):
-			player.SetMotionY( -JUMP )
-		end
-	end
-	
-	left:
-		if (player.GetMotionX() - MOVE >= -MOVE):
-			player.ShiftMotionX( -MOVE )
-		else
-			player.SetMotionX( -MOVE )
-		end
-	end
-	
-	right:
-		if (player.GetMotionX() + MOVE <= MOVE):
-			player.ShiftMotionX( MOVE )
-		else
-			player.SetMotionX( MOVE )
-		end
-	end
-end
-
-Scene::KeyboardUp():
-	//this is odd, since it restricts the motion even on key release
-	left:
-		if (player.GetMotionX() + MOVE <= MOVE):
-			player.ShiftMotionX( MOVE )
-		else
-			player.SetMotionX( MOVE )
-		end
-	end
-	
-	right:
-		if (player.GetMotionX() - MOVE >= -MOVE):
-			player.ShiftMotionX( -MOVE )
-		else
-			player.SetMotionX( -MOVE )
-		end
-	end
-end
-

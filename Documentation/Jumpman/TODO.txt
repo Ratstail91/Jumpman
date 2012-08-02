@@ -1,0 +1,5 @@
+Add tweak parameters to Entity::Check functions.
+Get the movement algorithm right.
+
+Test collision_side
+fix jumping glitch
