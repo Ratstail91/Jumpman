@@ -24,6 +24,8 @@ end
 collision_side.h
 -------------------------
 
+//simple enough
+
 enum Direction:
 	NONE = 0
 	ABOVE
@@ -40,79 +42,51 @@ Direction CheckCollisionRight	(myBox, otherBox)
 
 -------------------------
 
-//deprecated, but useful.
-Entity::CheckCollisionSide( otherBox ): //returns the direction of a collision
-	/* this figures out the position of the OTHER bbox relative to this entity
-	 * 0: no collision
-	 * 1: above
-	 * 2: below
-	 * 3: left
-	 * 4: right
-	*/
+Scene::VerticalControl(Player, Wall):
+	//freefall control
 	
-	if (!BBox2D::CheckWorldBBox( otherBox )) return 0; //no collision, skip the rest
-	
-	SDL_Rect myBox = GetWorldBBox()
-	
-	//above
-	if (
-		(closer to the top than the bottom) &&
-		(closer to the top than the sides)
-		)
-		return above
-	
-	//should I have done this as a macro?
-	
-	//above
-	if (
-		(otherBox.y + otherBox.h - myBox.y < myBox.y + myBox.h - otherBox.y) &&
-		(otherBox.y + otherBox.h - myBox.y < min( otherBox.x+otherBox.w-myBox.x, myBox.x+myBox.w-otherBox.x ))
-		)
-		return 1;
-	
-	//below
-	if (
-		(myBox.y + myBox.h - otherBox.y < otherBox.y + otherBox.h - myBox.y) &&
-		(myBox.y + myBox.h - otherBox.y < min( otherBox.x+otherBox.w-myBox.x, myBox.x+myBox.w-otherBox.x ))
-		)
-		return 2;
+	if (motionY > 0 && collision below):
+		//landing on a platform
+		stop fall
+		snap to the platform
+	else if (motionY < 0 && collision above):
+		//hitting a platform above
+		stop fall
+		snap to the platform (bottom)
+		start fall
+	else if (motion != 0):
+		//freefall
+		if (motionY >= FALL):
+			motionY = FALL
+		else
+			motionY += ACCELERATE
+		end
+	else if (motionY == 0 && no collision below)
+		motionY += ACCELERATE
+	end
 end
 
+
+Scene::HorizontalControl(Player, Wall):
+	if (motionX < 0 && collision on the left):
+		stop motion
+		snap to the right of the platform
+	end
+	
+	if (motionY > 0 && collision on the right):
+		stop motion
+		snap to the left of the platform
+	end
+end
+
+
 Scene::Update():
-	//freefall control
-	if (falling != 0):
-		if (collision w/ platform below):
-			stop fall
-			snap to the platform
-			
-		else if (collision w/ platform above):
-			stop fall
-			snap to the bottom of the platform
-			start falling down
-			
-		else //normal fall
-			if (falling >= FALL):
-				falling = FALL
-			else
-				falling += ACCELERATE
-			end
-		end
-		
-	else: //not falling
-		if (not collision w/ platform below)
-			falling += ACCELERATE
-		end
+	for each wall:
+		VerticalControl(player, wall)
+		HorizontalControl(player, wall)
 	end
 	
-	//sideways movement control
-	if (collision on the left):
-		stop leftward movement
-	end
-	
-	if (collision on the right):
-		stop rightward movement
-	end
-	
+	//updates
 	CalcDeltaTime()
 	player.Update(GetDeltaTime())
 end

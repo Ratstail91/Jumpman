@@ -30,6 +30,10 @@ protected:
 	virtual void KeyDown(SDL_KeyboardEvent const&);
 	virtual void KeyUp	(SDL_KeyboardEvent const&);
 
+	/* Movement control */
+	void VerticalControl	(Entity* pPlayer, Entity* pWall);
+	void HorizontalControl	(Entity* pPlayer, Entity* pWall);
+
 	/* Members */
 	Entity m_thing;
 	Entity m_floor;
